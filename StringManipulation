@@ -1,0 +1,156 @@
+#-----------------------------------------------------------------------------------------------------------------
+# Joey Petrovic
+# CSC2025 2H1 Computr Arch/Assembly Language FA24
+# Title: Progrmming HW #6
+# Date: 
+# Purpose: This program edits the string to remove all of the white spaces, digits, punctuation, and other
+#special characters, leaving only the letters. It allows the user to repeat the process or exit the program.
+#-----------------------------------------------------------------------------------------------------------------
+
+
+
+# Inputs: 
+#  A silly lil one-line string from the user.
+#  A silly lil single character ('y' or 'n') to decide if the program repeats.
+
+# Outputs:
+#  Original string to be entered by the user.
+#  Compressed lil string with only letters.
+#  Prompt asking if the super silly goofy lil user wants to enter another string.
+
+# Registers:
+# $t0 - pointer to input a silly lil string
+# $t1 - pointer to compressed silly lil string
+# $t2 - index for compressed silly willy lil string
+# $t3 - current character from silly lil input string
+# $t4, $t5 - used to store ASCII boundaries for character checks
+# $v0 - used for silly willy NILLY lil syscalls
+# -----------------------------------------------------------
+
+#*Waldo* is hiding in the comments (there's a few fakes to throw you off)
+
+.data
+prompt: .asciiz "Please enter a one-line string with a maximum of 100 characters: "  	# Message prompt for silly lil user input
+originalLabel: .asciiz "\nOriginal String: \""  					# Label for original goofy lil string display
+compressedLabel: .asciiz "\nCompressed String: \""  					# Label for compressed wacky lil string display
+repeatPrompt: .asciiz "\nWould you like to enter a new string (y/n)? "  		# Repeat prompt
+newline: .asciiz "\"\n"  								# Newline for formatting
+inputString: .space 101  								# Buffer for dopey lil input string (100 characters + null terminator)
+compressedString: .space 101  								# Buffer for compressed nutty lil string (100 characters + null terminator)
+
+.text
+main:
+    # ---------------------------------------------------------------------------
+    # Main procedure: Asks user to input a string, removes non-letter
+    # characters, and then asks if the user wants to repeat the process.
+    # ---------------------------------------------------------------------------
+    
+    # Prompt the user to enter a string
+    la $a0, prompt           # Load the address of the silly lil prompt message into $a0
+    li $v0, 4                # Load syscall code 4 (print silly lil string)
+    syscall                  # Make syscall to print silly lil prompt
+
+    # Read the input string from the user
+    la $a0, inputString      # Load the address of the silly lil inputString buffer into $a0
+    li $a1, 100              # Set maximum input length to 100 silly willy nilly chilly philly grilly characters
+    li $v0, 8                # Load syscall code 8 (read string)
+    syscall                  # Make syscall to read the silly lil absolute GOOBER of a string
+
+    # Display the original string
+    la $a0, originalLabel    # Load the address of the "Original String:" label
+    li $v0, 4                # Load syscall code 4 (print silly lil string)
+    syscall                  # Print the label
+
+    la $a0, inputString      # Load the address of the original string (inputString)
+    li $v0, 4                # Load syscall code 4 (print silly lil string)
+    syscall                  # Print the original silly lil string
+
+    la $a0, newline          # Load the newline silly lil string for formatting purposes
+    li $v0, 4                # Load syscall code 4 (print silly lil string)
+    syscall                  # Print the newline       (*Maldo)
+
+    # Initialize pointers and indexes for string compression
+    la $t0, inputString      # $t0 points to the silly lil input string (inputString)
+    la $t1, compressedString # $t1 points to the compressed silly lil string (compressedString)
+    li $t2, 0                # Initialize compressed silly lil string index to 0
+
+compress:
+    # ---------------------------------------------------------------------------
+    # Compress procedure: Processes the input string, removing non-letter
+    # characters and saving only letters into the compressed string.
+    # ---------------------------------------------------------------------------
+
+    lb $t3, 0($t0)           # Load byte from silly willy input string into $t3
+    beqz $t3, done           # If null terminator is reached, jump to 'done'
+
+    # Check if the character is a letter (A-Z or a-z)
+    li $t4, 'A'              # Load ASCII value for 'A' into $t4
+    li $t5, 'Z'              # Load ASCII value for 'Z' into $t5
+    blt $t3, $t4, nextChar   # If character is less than 'A', it's a total goober, so skip to next character
+    bgt $t3, $t5, checkLower # If character is greater than 'Z', it's also a total goober, but this time check if it's lowercase because I said so
+
+    # If uppercase letter, add it to the compressed string
+    sb $t3, 0($t1)           # Store the character in the compressed lil string
+    addi $t1, $t1, 1         # Increment the compressed string pointer
+    j nextChar               # Jump to 'nextChar' to process the next character fella
+
+checkLower:
+    li $t4, 'a'              # Load ASCII value for 'a' into $t4
+    li $t5, 'z'              # Load ASCII value for 'z' into $t5
+    blt $t3, $t4, nextChar   # If character is less than 'a', still a goober, skip to next character
+    bgt $t3, $t5, nextChar   # If character is greater than 'z', once a goober, always a goober, skip to next character
+#*Waldo*
+    # If lowercase letter, add it to the compressed string
+    sb $t3, 0($t1)           # Store the character in the compressed string
+    addi $t1, $t1, 1         # Increment the compressed string pointer
+
+nextChar:
+    addi $t0, $t0, 1         # Move to the next character in the input string
+    j compress               # Repeat the compression loop
+
+done:
+    # Null-terminate the compressed string
+    sb $zero, 0($t1)         # Store null terminator at the end of the compressed string
+
+    # Display the compressed string
+    la $a0, compressedLabel  # Load the address of the "Compressed String:" label
+    li $v0, 4                # Load syscall code 4 (print string) (*Wolda*)
+    syscall                  # Print the label
+
+    la $a0, compressedString # Load the address of the compressed string
+    li $v0, 4                # Load syscall code 4 (print string)
+    syscall                  # Print the compressed string
+
+    la $a0, newline          # Load the newline string for formatting
+    li $v0, 4                # Load syscall code 4 (print string)
+    syscall                  # Print the newline
+
+    # Prompt for repeat option
+    la $a0, repeatPrompt     # Load the address of the repeat prompt message
+    li $v0, 4                # Load syscall code 4 (print string)
+    syscall                  # Print the (*Walgo*)repeat prompt
+
+    # Read user input for repeat option
+    li $v0, 12               # Load syscall code 12 (read a single character)
+    syscall                  # Read user input
+
+    # Check if user wants to repeat
+    li $t4, 'y'              # Load ASCII value for 'y' into $t4
+    li $t5, 'Y'              # Load ASCII value for 'Y' into $t5
+    beq $v0, $t4, new_line   # If input is 'y', jump to 'new_line'
+    beq $v0, $t5, new_line   # If input is 'Y', jump to 'new_line'
+
+    # Exit program
+    li $v0, 10               # Load syscall code 10 (exit program)
+    syscall                  # Exit the program
+
+new_line:
+    # ---------------------------------------------------------------------------
+    # Newline procedure: Prints a newline character before restarting the program.
+    # ---------------------------------------------------------------------------
+    
+    la $a0, newline          # Load the newline silly lil string
+    li $v0, 4                # Load syscall code 4 (print string)
+    syscall                  # Print the newline
+
+    j main                   # Jump back to the 'main' label to restart this masterpiece
