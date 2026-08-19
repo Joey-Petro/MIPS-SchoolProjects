@@ -1,0 +1,382 @@
+#----------------------------------------------------------------------------------------------------------------------------
+# Joey Petrovic
+# Course: Programmin Hw #9
+# Title: 32-bit Integer Calculator used for number converion
+# Date: 28 October 2024
+# Purpose: This program converts a 32-bit integer entered by the user in decimal, hexadecimal, or binary format
+# to the other two bases and displays the result with proper formatting.
+#----------------------------------------------------------------------------------------------------------------------------
+
+# I know this program is messing up with the hexadecimal outputs, but I've spent hours and hours 
+# trying to fix it and I'm out of time, especially now that I have company over for a wedding.
+# Super sorry, I started the project earlier than normal and still struggled for some reason.
+# I still did where's waldo though 
+
+# Find (Waldo), dont fall for decoys: (Walbo)
+
+
+.data
+menu_prompt:         .asciiz "\n(1) Decimal\n(2) Hexadecimal\n(3) Binary\n(4) Exit\nPlease choose one of the menu options: "  # Menu prompt
+decimal_prompt:      .asciiz "Please enter a 32-bit Decimal integer: "  # Decimal prompt
+hex_prompt:          .asciiz "Please enter a 32-bit Hexadecimal value: "  # Hex prompt
+binary_prompt:       .asciiz "Please enter a 32-bit Binary value: "  # Binary prompt
+invalid_option:      .asciiz "Invalid option. Please try again.\n"  # Invalid option message
+invalid_entry:       .asciiz "Invalid entry. Please enter a valid 32-bit value.\n"  # Invalid entry message
+result_header:       .asciiz "Conversion Results:\n"  # Results header
+decimal_result:      .asciiz "Decimal Value: "  # Decimal result label
+hex_result:          .asciiz "Hexadecimal Value: "  # Hex result label
+binary_result:       .asciiz "Binary Value: "  # Binary result label
+newline:             .asciiz "\n"  # Newline character
+input_buffer:        .space 9  # Buffer for input strings
+
+.text
+main:
+    # Display menu and get user option
+    li $v0, 4  # Load syscall for print string
+    la $a0, menu_prompt  # Load menu prompt address
+    syscall  # Print menu prompt
+    
+    # Get user choice for menu option
+    li $v0, 5  # Load syscall for read integer
+    syscall  # Read user input
+    move $t0, $v0   # Store user choice in $t0
+
+    # Check for exit
+    beq $t0, 4, exit_program  # If choice is 4, exit
+
+    # Jump to conversion based on user input
+    beq $t0, 1, decimal_entry  # If choice is 1, decimal entry
+    beq $t0, 2, hex_entry  # If choice is 2, (Wa1do) hex entry
+    beq $t0, 3, binary_entry  # If choice is 3, binary entry
+    
+    # Handle invalid menu option
+    la $a0, invalid_option  # Load invalid option message
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print invalid option message
+    j main   # Restart the menu loop
+
+# Decimal Entry Procedure
+decimal_entry:
+    # Prompt for decimal input
+    la $a0, decimal_prompt  # Load decimal prompt
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print decimal prompt
+    
+    # Read and validate decimal input
+    li $v0, 5  # Load syscall for read integer
+    syscall  # Read user input
+    move $t1, $v0  # Store the input value in $t1
+
+    # Display results header
+    la $a0, result_header  # Load results header
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print results header
+
+    # Display decimal result
+    la $a0, decimal_result  # Load decimal result label
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print decimal result label
+    move $a0, $t1  # Move input value to $a0
+    li $v0, 1  # Load syscall for print integer
+    syscall  # Print decimal value
+
+    # Newline after decimal result
+    la $a0, newline  # Load newline character
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print newline
+
+    # Convert decimal to hexadecimal
+    la $a0, hex_result  # Load hex result label
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print hex result (Walbo) label
+    move $a0, $t1  # Move input value to $a0
+    jal format_hex  # Call format hex subroutine
+
+    # Newline after hexadecimal result
+    la $a0, newline  # Load newline character
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print newline
+
+    # Convert decimal to binary
+    la $a0, binary_result  # Load binary result label
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print binary result label
+    move $t2, $t1  # Move input value to $t2
+    jal display_binary  # Call binary display subroutine
+
+    j main   # Return to main menu
+
+# Hexadecimal Entry Procedure
+hex_entry:
+    # Prompt for hexadecimal input
+    la $a0, hex_prompt  # Load hex prompt
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print hex prompt
+
+    # Read hexadecimal input as a string
+    li $v0, 8  # Load syscall for read string
+    la $a0, input_buffer  # Load input buffer address
+    li $a1, 9  # Set buffer size
+    syscall  # Read hex input
+
+    # Convert string to integer
+    la $a0, input_buffer  # Load input buffer address
+    jal hex_to_int  # Call hex (W0ldo)to int subroutine
+    move $t1, $v0  # Store the converted integer in $t1
+
+    # Display results header
+    la $a0, result_header  # Load results header
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print results header
+
+    # Display hexadecimal result
+    la $a0, hex_result  # Load hex result label
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print hex result label
+    move $a0, $t1  # Move input value to $a0
+    jal format_hex  # Call format hex subroutine
+
+    # Newline after hexadecimal result
+    la $a0, newline  # Load newline character
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print newline
+
+    # Convert hexadecimal to decimal
+    la $a0, decimal_result  # Load decimal result label
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print decimal result label
+    move $a0, $t1  # Move input value to $a0
+    li $v0, 1  # Load syscall (Walda)for print integer
+    syscall  # Print decimal value
+
+    # Newline after decimal result
+    la $a0, newline  # Load newline character
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print newline
+
+    # Convert hexadecimal to binary
+    la $a0, binary_result  # Load binary result label
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print binary result label
+    move $t2, $t1  # Move input value to $t2
+    jal display_binary  # Call binary display subroutine
+
+    j main   # Return to main menu
+
+# Binary Entry Procedure
+binary_entry:
+    # Prompt for binary input
+    la $a0, binary_prompt  # Load binary prompt
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print binary prompt
+
+    # Read binary input as a string
+    li $v0, 8  # Load syscall for read string
+    la $a0, input_buffer  # Load input buffer address
+    li $a1, 33  # Set buffer size
+    syscall  # Read binary input
+
+    # Convert string to integer
+    la $a0, input_buffer  # Load input buffer address
+    jal bin_to_int  # Call bin to int subroutine
+    move $t1, $v0  # Store the converted integer in $t1
+
+    # Display results header
+    la $a0, result_header  # Load results header
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print results header
+
+    # Display binary result
+    la $a0, binary_result  # Load binary result label
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print binary result label
+    move $t2, $t1  # Move input value to $t2
+    jal display_binary  # Call binary display subroutine
+
+    # Newline after binary result
+    la $a0, newline  # Load newline character
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print newline
+
+   # Convert binary to decimal
+    la $a0, decimal_result  # Load decimal result label
+    li $v0, 4  # Load syscall for print string
+    syscall  # Print decimal result(W0lda) label
+    move $a0, $t1  # Move input value to $a0
+    jal format_hex  # Call format hex subroutine
+
+    j main   # Return to main menu
+
+# Binary Display Subroutine
+# This subroutine displays a 32-bit binary number with spacing in groups of 4.
+display_binary:
+    li $t3, 32         # Counter for 32 bits
+    li $t4, 0x80000000 # Mask to check each bit
+
+display_loop:
+    beq $t3, 0, end_binary  # Exit when all bits are displayed
+
+    and $t5, $t2, $t4     # Isolate bit
+    beqz $t5, print_zero  # If bit is 0, jump to print_zero
+    li $a0, '1'  # Load '1' character
+    j print_bit  # Jump to print_bit
+
+print_zero:
+    li $a0, '0'  # Load '0' character
+
+print_bit:
+    li $v0, 11  # Load syscall for print character
+    syscall  # Print bit
+
+    # Decrement bit counter and shift mask
+    sub $t3, $t3, 1  # Decrement counter
+    srl $t4, $t4, 1  # Shift mask right
+
+    # Insert space every 4 bits
+    rem $t6, $t3, 4  # Check if 4 bits
+    bnez $t6, display_loop  # If not, continue loop
+    li $a0, ' '  # Load space character
+    li $v0, 11  # Load syscall (W@ldo) for print character
+    syscall  # Print space
+    j display_loop  # Continue loop
+
+end_binary:
+    li $a0, '\n'  # Load newline character
+    li $v0, 11  # Load syscall for print character
+    syscall  # Print newline
+    jr $ra  # Return from subroutine
+
+
+# Hex to Integer Conversion Subroutine
+
+# This part feels like a mess, I just left it so that I didn't destroy the parts that are at least working.
+
+hex_to_int:
+    # Convert hex string to integer
+    la $t0, input_buffer
+    li $t1, 0  # Initialize result to 0
+    li $t2, 0  # Initialize index to 0
+
+hex_to_int_loop:
+    lb $t3, 0($t0)  # Load byte from input buffer
+    beqz $t3, hex_to_int_done  # If null terminator, end loop
+
+    # Convert ASCII to integer
+    li $t4, 48  # ASCII '0'
+    li $t5, 57  # ASCII '9'
+    blt $t3, $t4, hex_to_int_alpha
+    bgt $t3, $t5, hex_to_int_alpha
+    sub $t3, $t3, $t4  # Convert '0'-'9' to 0-9
+    j hex_to_int_shift
+hex_to_int_alpha:
+    li $t4, 65  # ASCII 'A'
+    li $t5, 70  # ASCII 'F'
+    blt $t3, $t4, hex_to_int_lower
+    bgt $t3, $t5, hex_to_int_lower
+    sub $t3, $t3, $t4
+    addi $t3, $t3, 10  # Convert 'A'-'F' to 10-15
+    j hex_to_int_shift
+
+hex_to_int_lower:
+    li $t4, 97  # ASCII 'a'
+    li $t5, 102  # ASCII 'f'
+    blt $t3, $t4, hex_to_int_invalid
+    bgt $t3, $t5, hex_to_int_invalid
+    sub $t3, $t3, $t4
+    addi $t3, $t3, 10  # Convert 'a'-'f' to 10-15
+
+hex_to_int_shift:
+    sll $t1, $t1, 4  # Shift result left by 4 bits
+    or $t1, $t1, $t3  # Add current digit to result
+    addi $t0, $t0, 1  # Move to next character
+    j hex_to_int_loop
+
+hex_to_int_invalid:
+    # Handle invalid character (optional)
+    j hex_to_int_done
+
+hex_to_int_done:
+    move $v0, $t1  # Move result to $v0
+    jr $ra
+
+# Binary to Integer Conversion Subroutine
+bin_to_int:
+    # Convert binary string to integer
+    la $t0, input_buffer
+    li $t1, 0  # Initialize result to 0
+    li $t2, 0  # Initialize index to 0
+
+bin_to_int_loop:
+    lb $t3, 0($t0)  # Load byte from input buffer
+    beqz $t3, bin_to_int_done  # If null terminator, end loop
+
+    # Convert ASCII '0' and '1' to binary
+    li $t4, 48  # ASCII '0'
+    li $t5, 49  # ASCII '1'
+    beq $t3, $t4, bin_to_int_shift0
+    beq $t3, $t5, bin_to_int_shift1
+    j bin_to_int_invalid
+
+bin_to_int_shift0:
+    sll $t1, $t1, 1  # Shift result left by 1 bit
+    j bin_to_int_next
+
+bin_to_int_shift1:
+    sll $t1, $t1, 1  # Shift result left by 1 bit
+    ori $t1, $t1, 1  # Add 1 to result
+    j bin_to_int_next
+
+bin_to_int_next:
+    addi $t0, $t0, 1  # Move to next character
+    j bin_to_int_loop
+
+bin_to_int_invalid:
+    # Handle invalid character (optional)
+    j bin_to_int_done
+
+bin_to_int_done:
+    move $v0, $t1  # Move result to $v0
+    jr $ra
+
+# Format Hexadecimal Subroutine
+format_hex:
+    # This subroutine formats (Waldo) the hexadecimal value with spaces
+    li $t3, 8  # Number of hex digits
+    li $t4, 0xF0000000  # Mask to isolate each hex digit
+
+format_hex_loop:
+    beq $t3, 0, format_hex_done  # Exit when all digits are displayed
+
+    and $t5, $a0, $t4  # Isolate hex digit
+    srl $t5, $t5, 28  # Shift digit to the rightmost position
+    blt $t5, 10, format_hex_digit  # If digit < 10, it's 0-9
+    addi $t5, $t5, 7  # Adjust for 'A'-'F'
+
+format_hex_digit:
+    addi $t5, $t5, 48  # Convert to ASCII
+    li $v0, 11  # Load syscall for print character
+    move $a0, $t5  # Move digit to $a0
+    syscall  # Print digit
+
+    # Decrement digit counter and shift mask
+    sub $t3, $t3, 1  # Decrement counter
+    sll $t4, $t4, 4  # Shift mask left
+
+    # Insert space every 4 digits
+    rem $t6, $t3, 4  # Check if 4 digits
+    bnez $t6, format_hex_loop  # If not, continue loop
+    li $a0, ' '  # Load space character
+    li $v0, 11  # Load syscall for print character
+    syscall  # Print space
+    j format_hex_loop  # Continue loop
+
+format_hex_done:
+    li $a0, '\n'  # Load newline character
+    li $v0, 11  # Load syscall (Maldo) for print character
+    syscall  # Print newline
+    jr $ra  # Return from subroutine
+
+# Exit Program
+exit_program:
+    li $v0, 10   # Exit syscall
+    syscall  # Exit program
