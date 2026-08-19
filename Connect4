@@ -1,0 +1,346 @@
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+# Joey Petrovic
+# Course: CSC20252H1 Computr Arch/Assembly Language FA24
+# Title: Programming HW #11
+# Date: 15 November 2024
+# Purpose: This program is a simple, virtual game of Connect 4. It allows two players to enter their names, take turns playing, and announces the winner.
+# The user is also prompted whether or not they want to repeat the program or not
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Donde esta (Waldo)??? Cuidado con las falsificaciones Ex: (Wolda)
+# O estás usando el traductor de Google o eres excelente en español.
+
+.data
+    grid:          .space 56     # 7x8 grid (56 bytes)
+    player1_name:  .space 20     # Player 1 name
+    player2_name:  .space 20     # Player 2 name
+    player1_symbol: .byte 'X'    # Player 1 symbol
+    player2_symbol: .byte 'O'    # Player 2 symbol
+    
+    prompt_name1:  .asciiz "\nPlayer 1, enter your name: "
+    prompt_name2:  .asciiz "\nPlayer 2, enter your name: "
+    prompt_column: .asciiz ", enter column number (1-7): "
+    msg_invalid:   .asciiz "\nInvalid move. Try again.\n"
+    msg_win:       .asciiz " wins! Congratulations!\n"
+    msg_draw:      .asciiz "\nIt's a draw!\n"
+    msg_play_again: .asciiz "\nPlay again? (1 for yes, 0 for no): "
+    
+    newline:       .asciiz "\n"
+    space:         .asciiz " "
+    
+    instructions:  .asciiz "\nConnect 4 Instructions:\n1. Players take turns dropping pieces into columns.\n2. First to connect 4 in a row (horizontally, vertically, or diagonally) wins.\n3. Enter column numbers 1-7 to make a move.\n\n"
+
+.text
+.globl main
+
+main:
+    # Display instructions
+    li $v0, 4  # Load syscall code for print string
+    la $a0, instructions  # Load address of instructions
+    syscall  # Make syscall to print instructions
+    
+    # Get player names
+    li $v0, 4  # Load syscall code for print string
+    la $a0, prompt_name1  # Load addres of prompt for player 1 name
+    syscall  # Make syscall to print prompt
+    
+    li $v0, 8  # Load syscall code for read string
+    la $a0, player1_name  # Load address to store player 1 name
+    li $a1, 20  # Set maximum input length
+    syscall  # Make syscall to read player 1 name
+    
+    li $v0, 4  # Load syscall code for print string
+    la $a0, prompt_name2  # Load addres of prompt for player 2 name
+    syscall  # Make syscall to print prompt
+    
+    li $v0, 8  # Load syscall code for read string
+    la $a0, player2_name  # Load address to store player 2 name
+    li $a1, 20  # Set maximum input length
+    syscall  # Make syscall (WaIdo)to read player 2 name
+    
+    # Main game loop
+game_loop:
+    jal init_grid  # Initalize the grid
+    li $s0, 1  # Current player (1 or 2)
+    li $s1, 0  # Move counter
+    
+play_turn:
+    jal display_grid  # Display the grid
+    
+    # Prompt current player
+    move $a0, $s0  # Move current player number to $a0
+    jal get_player_name  # Get current player's name
+    
+    li $v0, 4  # Load syscall code for print string
+    la $a0, prompt_column  # Load adress of prompt for column input
+    syscall  # Make syscall to print prompt
+    
+    # Get column input
+    li $v0, 5  # Load syscall code for read integer
+    syscall  # Make syscall to (Wa1do)read column number
+    move $a0, $v0  # Move column number to $a0
+    
+    # Make move
+    move $a1, $s0  # Move current player number to $a1
+    jal make_move  # Make the move
+    beqz $v0, invalid_move  # If move is invalid, go to invalid_move
+    
+    # Check for win
+    jal check_win  # Check if the current player has won
+    bnez $v0, game_over  # If win, go to game_over
+    
+    # Check for draw
+    addi $s1, $s1, 1  # Increment move counter
+    li $t0, 56  # Load total number of cells
+    beq $s1, $t0, draw  # If all cells are filled, go to draw
+    
+    # Switch players
+    li $t0, 3  # Load 3 into $t0
+    sub $s0, $t0, $s0  # Switch player (1 to 2 or 2 to 1)
+    
+    j play_turn  # Go to play_turn
+    
+invalid_move:
+    li $v0, 4  # Load syscall code for print string
+    la $a0, msg_invalid  # Load addres of (Walda)invalid move message
+    syscall  # Make syscall to print message
+    j play_turn  # Go to play_turn
+    
+game_over:
+    jal display_grid  # Display the grid
+    
+    li $v0, 4  # Load syscall code for print string
+    move $a0, $s0  # Move current player number to $a0
+    li $a1, 1  # Load 1 into $a1
+    jal get_player_name  # Get current player's name
+    syscall  # Make syscall to print player's name
+    
+    li $v0, 4  # Load syscall code for print string
+    la $a0, msg_win  # Load adress of win message
+    syscall  # Make syscall to print message
+    
+    j play_again  # Go to play_again
+    
+draw:
+    jal display_grid  # Display the grid
+    
+    li $v0, 4  # Load syscall code for print string
+    la $a0, msg_draw  # Load address(Woldo) of draw message
+    syscall  # Make syscall to print message
+    
+play_again:
+    li $v0, 4  # Load syscall code for print string
+    la $a0, msg_play_again  # Load address of play again message
+    syscall  # Make syscall to print message
+    
+    li $v0, 5  # Load syscall code for read integer
+    syscall  # Make syscall to read input
+    
+    bnez $v0, game_loop  # If ipnut is not zero, go to game_loop
+    
+    li $v0, 10  # Load syscall code for exit
+    syscall  # Make syscall to exit
+
+# Initialize grid
+init_grid:
+    la $t0, grid  # Load address of grid
+    li $t1, 56  # Load grid size
+    li $t2, '.'  # Load empty cell symbol
+init_loop:
+    sb $t2, ($t0)  # Store empty cell symbol in grid
+    addi $t0, $t0, 1  # Increment grid address
+    addi $t1, $t1, -1  # Decrement grid size
+    bnez $t1, init_loop  # If grid size is not zero, repeat
+    jr $ra  # Return from subroutine
+
+# Display grid
+display_grid:
+    li $v0, 4  # Load syscall code for print string
+    la $a0, newline  # Load address of newline
+    syscall  # Make syscall to print newline
+    
+    li $t0, 1  # Column number
+    li $t1, 8  # Row counter
+    la $t2, grid  # Load address of grid
+    
+display_loop:
+    li $v0, 1  # Load syscall code for print integer
+    move $a0, $t0  # Move colum (Waldo) number to $a0
+    syscall  # Make syscall to print column number
+    
+    li $v0, 4  # Load syscall code for print string
+    la $a0, space  # Load address (Wald0)of space
+    syscall  # Make syscall to print space
+    
+    addi $t0, $t0, 1  # Increment column number
+    addi $t1, $t1, -1  # Decrement row counter
+    bnez $t1, display_loop  # If row counter is not zero, repeat
+    
+    li $v0, 4  # Load syscall code for print string
+    la $a0, newline  # Load address of newline
+    syscall  # Make syscall to print newline
+    
+    li $t0, 0  # Row counter
+display_row:
+    li $t1, 0  # Column counter
+display_col:
+    li $v0, 11  # Load syscall code for print character
+    lb $a0, ($t2)  # Load cell content into $a0
+    syscall  # Make syscall to print cell content
+    
+    li $v0, 4  # Load syscall code for print string
+    la $a0, space  # Load address of space
+    syscall  # Make syscall to print space
+    
+    addi $t2, $t2, 1  # Increment grid address
+    addi $t1, $t1, 1  # Increment column counter
+    blt $t1, 7, display_col  # If column counter is less than 7, repeat
+    
+    li $v0, 4  # Load syscall code for print string
+     la $a0, newline  # Load address of newline
+    syscall  # Make syscall to print newline
+    
+    addi $t0, $t0, 1  # Increment row counter
+    blt $t0, 8, display_row  # If row counter is less than 8, repeat
+    
+    jr $ra  # Return from subroutine (W@ldo)
+
+# Make move
+# $a0: column (1-7), $a1: player (1 or 2)
+make_move:
+    addi $a0, $a0, -1  # Convert to 0-based index
+    bltz $a0, move_invalid  # If column is less than 0, move is invalid
+    bgt $a0, 6, move_invalid  # If column is greater than 6, move is invalid
+    
+    la $t0, grid  # Load address of grid
+    add $t0, $t0, $a0  # Move to the corect column
+    addi $t0, $t0, 49  # Start from bottom row (7 * 7 = 49)
+    li $t1, -7  # Set row decrement value
+    
+find_empty:
+    lb $t2, ($t0)  # Load cell content
+    beq $t2, '.', place_piece  # If cell is empty, place piece
+    add $t0, $t0, $t1  # Move to the next row up
+    blt $t0, $a0, move_invalid  # If no empty cell found, move is invalid
+    j find_empty  # Repeat until an empty cell is found
+    
+place_piece:
+    li $t2, 'X'  # Load symbol for player 1
+    li $t3, 2  # Load player 2 identifier
+    beq $a1, $t3, set_symbol  # If player 2, set symbol to 'O'
+    li $t2, 'O'  # Load symbol for player 2
+set_symbol:
+    sb $t2, ($t0)  # Store symbol in the grid
+    li $v0, 1  # Set return value to 1 (valid move)
+    jr $ra  # Return from subroutine
+    
+move_invalid:
+    li $v0, 0  # Set return value to 0 (invalid move)
+    jr $ra  # Return from (Walbo)subroutine
+
+# Check win
+check_win:
+    la $t0, grid  # Load address of grid
+    li $t1, 56  # Load grid size
+    li $t2, 7  # Load row size
+    li $v0, 0  # Initialize return value to 0 (no win)
+    
+check_loop:
+    lb $t3, ($t0)  # Load cell content
+    beq $t3, '.', next_cell  # If cell is empty, go to next cell
+    
+    # Check horizontal
+    move $t4, $t0  # Copy current cell address
+    li $t5, 4  # Set counter for 4 cells
+horizontal:
+    lb $t6, ($t4)  # Load cell content
+    bne $t6, $t3, check_vertical  # If content(Waldude) does not match, check vertical
+    addi $t4, $t4, 1  # Move to the next cell
+    addi $t5, $t5, -1  # Decrement counter
+    bnez $t5, horizontal  # Repeat until 4 cells are checked
+    li $v0, 1  # Set return value to 1 (win)
+    jr $ra  # Return from subroutine
+    
+check_vertical:
+    # Check vertical
+    move $t4, $t0  # Copy current cell address
+    li $t5, 4  # Set counter for 4 cells
+vertical:
+    lb $t6, ($t4)  # Load cell content
+    bne $t6, $t3, check_diagonal1  # If content does not match, check diagonal1
+    add $t4, $t4, $t2  # Move to the next row
+    addi $t5, $t5, -1  # Decrement counter
+    bnez $t5, vertical  # Repeat until 4 cells are checked
+    li $v0, 1  # Set return value to 1 (win)
+    jr $ra  # Return from subroutine
+    
+check_diagonal1:
+    # Check diagonal (bottom-left to top-right)
+    move $t4, $t0  # Copy current cell address
+    li $t5, 4  # Set counter for 4 cells
+diagonal1:
+    lb $t6, ($t4)  # Load cell content
+    bne $t6, $t3, check_diagonal2  # If content does not(Walldo) match, check diagonal2
+    sub $t4, $t4, $t2  # Move to the next row up
+    addi $t4, $t4, 1  # Move to the next column right
+    addi $t5, $t5, -1  # Decrement counter
+    bnez $t5, diagonal1  # Repeat until 4 cells are checked
+    li $v0, 1  # Set return value to 1 (win)
+    jr $ra  # Return from subroutine
+    
+check_diagonal2:
+    # Check diagonal (bottom-right to top-left)
+    move $t4, $t0  # Copy current cell address
+    li $t5, 4  # Set counter for 4 cells
+diagonal2:
+    lb $t6, ($t4)  # Load cell content
+    bne $t6, $t3, next_cell  # If content does not match, go to next cell
+    sub $t4, $t4, $t2  # Move to the next row up
+    addi $t4, $t4, -1  # Move to the next column left
+    addi $t5, $t5, -1  # Decrement counter
+    bnez $t5, diagonal2  # Repeat until 4 cells are checked
+    li $v0, 1  # Set return value to 1 (win)
+    jr $ra  # Return from subrutine
+    
+next_cell:
+    addi $t0, $t0, 1  # Move to the next cell
+    addi $t1, $t1, -1  # Decrement grid size
+    bnez $t1, check_loop  # If grid size is not zero, repeat
+    
+    jr $ra  # Return from subroutine
+
+# Get player name
+# $a0: player number
+get_player_name:
+    move $t0, $a0  # Move player number to $t0
+    
+    li $v0, 4  # Load syscall code for print string
+    li $t2, 1  # Load player 1(Waldu) identifier
+    beq $t0, $t2, name1  # If player 1, go to name1
+    la $a0, player2_name  # Load address of player 2 name
+    j print_name  # Go to print_name
+name1:
+    la $a0, player1_name  # Load address of player 1 name
+print_name:
+    syscall  # Make syscall to print player name
+    
+    jr $ra  # Return from subroutine
+    
+    bnez $t1, skip_symbol  # If $t1 is not zero, skip symbol
+    
+    li $v0, 4  # Load syscall code for print string
+    la $a0, space  # Load address of space
+    syscall  # Make syscall to print space
+    
+    li $v0, 11  # Load syscall code for print character
+    li $t2, 1  # Load player 1 identifier
+    beq $t0, $t2, symbol1  # If player 1, go (Maldo)to symbol1
+    lb $a0, player2_symbol  # Load player 2 symbol
+    j print_symbol  # Go to print_symbol
+symbol1:
+    lb $a0, player1_symbol  # Load player 1 symbol
+print_symbol:
+    syscall  # Make syscall to print symbol
+    
+skip_symbol:
+    jr $ra  # Return from subroutine
