@@ -1,0 +1,150 @@
+#-----------------------------------------------------------
+# Name: Joey Petrovic
+# Course: CSC20252H1 Computr Arch/Assembly Language FA24
+# Program Title: Number Guessing Game
+# Date: [Date]
+# Description: This program generates a random number between 1 and 50
+# and allows the user to guess it with a maximum of 10 tries.
+# It provides feedback if the guess is too high, too low, or correct.
+#-----------------------------------------------------------
+    
+    
+    .data
+    prompt_guess:      .asciiz "Enter your guess (1-50): "
+    msg_too_high:      .asciiz "\nToo high!\n"
+    msg_too_low:       .asciiz "\nToo low!\n"
+    msg_correct:       .asciiz "\nCorrect! You win!\n"
+    invalid_input:     .asciiz "\nInvalid input. Guess spent!\n"
+    out_of_tries:      .asciiz "\nOut of tries! The correct number was: "
+    prompt_play_again: .asciiz "\nWould you like to play again? (1 for Yes, 0 for No): "
+    congrats:          .asciiz "\nCongratulations! You guessed it!\n"
+    random_seed:       .word 0  # For random number generation
+    max_tries:         .word 10  # Maximum number of tries
+    number_to_guess:   .word 0   # Random number to guess
+    guess_count:       .word 0   # Number of guesses taken
+    user_input:        .word 0   # User's guess
+    play_again:        .word 0   # Play again flag (1 = Yes, 0 = No)
+
+    .text
+    .globl main
+
+main:
+    # Seed the random generator using the current system time 
+    # (I tried around 4 different rand num generators, all of which kept giving me the same output. At this point I'm thinking it might just be a 
+    # software issue or something, so hopefully this section of code works on your computer) 
+    
+    li $v0, 40            # MARS syscall for system time (used as seed) - I even troubleshot by manually inputing the seed, and it didnt change anything
+    syscall
+    move $a0, $v0         # Move time to $a0 for random seed
+    li $v0, 40            # MARS syscall to seed the random generator (tried a few of these)
+    syscall
+
+start_game:
+    # Generate random number between 1 and 50
+    li $v0, 42            # MARS syscall to generate random number
+    li $a1, 50            # Limit number range to 50
+    syscall
+    addi $t0, $v0, 1      # Adjust so range is 1-50 instead of 0-49
+    sw $t0, number_to_guess   # Store random number to memory
+
+    # Reset guess count
+    li $t1, 0
+    sw $t1, guess_count
+
+guess_loop:
+    # Load the current guess count
+    lw $t1, guess_count
+    lw $t2, max_tries
+    bge $t1, $t2, end_game  # If guess count >= max tries, end game
+
+    # Prompt for guess
+    li $v0, 4
+    la $a0, prompt_guess
+    syscall
+
+    # Read the user's guess
+    li $v0, 5            # syscall for integer input
+    syscall
+    move $t3, $v0        # Store the user's guess in $t3
+
+    # Check if the input is valid (between 1 and 50)
+    blt $t3, 1, invalid_guess
+    bgt $t3, 50, invalid_guess
+
+    # Load the number to guess from memory
+    lw $t0, number_to_guess
+
+    # Check if the guess is correct
+    beq $t0, $t3, correct_guess
+
+    # Check if the guess is too high or too low
+    blt $t3, $t0, guess_too_low
+    j guess_too_high
+
+guess_too_low:
+    # Guess is too low
+    li $v0, 4
+    la $a0, msg_too_low
+    syscall
+    j update_guess_count
+
+guess_too_high:
+    # Guess is too high
+    li $v0, 4
+    la $a0, msg_too_high
+    syscall
+    j update_guess_count
+
+invalid_guess:
+    # Handle invalid input
+    li $v0, 4
+    la $a0, invalid_input
+    syscall
+    j update_guess_count
+
+correct_guess:
+    # Handle correct guess
+    li $v0, 4
+    la $a0, congrats
+    syscall
+    j prompt_play_again_loop
+
+update_guess_count:
+    # Increment guess count
+    lw $t1, guess_count
+    addi $t1, $t1, 1
+    sw $t1, guess_count
+    j guess_loop
+
+end_game:
+    # Out of tries
+    li $v0, 4
+    la $a0, out_of_tries
+    syscall
+
+    # Show the correct number
+    lw $a0, number_to_guess
+    li $v0, 1
+    syscall
+    j prompt_play_again_loop
+
+prompt_play_again_loop:
+    # Ask if the player wants to play again
+    li $v0, 4
+    la $a0, prompt_play_again
+    syscall
+
+    # Get the player's choice
+    li $v0, 5
+    syscall
+    move $t3, $v0
+
+    # Check if the player wants to play again (1 = Yes, 0 = No)
+    beqz $t3, exit_game
+    j start_game
+
+exit_game:
+    # Exit the program
+    li $v0, 10
+    syscall
+    
