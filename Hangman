@@ -1,0 +1,181 @@
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+# Joey Petrovic
+# Course: CSC20252H1 Computr Arch/Assembly Language FA24
+# Title: Programming HW #12
+# Date: 21 November 2024
+# Purpose: This program allows the user to play hangman, consisting of 10, 6 letter words. The player will be notified if they lose or win,
+# and will be prompted if they want to play with another word.
+#---------------------------------------------------------------------------------------------------------------------------------------------------------  
+#HEADS UP!! The code will sometimes act up if you enter the same correct letters multiple times, so try to avoid doing so. It should work otherwise.
+
+# __      __.__                       /\          __      __        .__       .___   _________ 
+#/  \    /  \  |__   ___________   ___)/  ______ /  \    /  \_____  |  |    __| _/___\_____   \
+#\   \/\/   /  |  \_/ __ \_  __ \_/ __ \ /  ___/ \   \/\/   /\__  \ |  |   / __ |/  _ \ /   __/
+# \        /|   Y  \  ___/|  | \/\  ___/ \___ \   \        /  / __ \|  |__/ /_/ (  <_> )   |   
+#  \__/\  / |___|  /\___  >__|    \___  >____  >   \__/\  /  (____  /____/\____ |\____/|___|   
+#       \/       \/     \/            \/     \/         \/        \/           \/      <___>   
+#Try and find (Waldo), dont fall for fakes (Ex: (Walbo))
+
+.data
+    # Ten 6-letter words
+    words: .asciiz "pickle", "muffin", "bubble", "noodle", "monkey", "banana", "goober", "danger", "buffet", "dinner" # List of noble words
+    word_count: .word 10  # Sum of words
+    
+    # Hangman stages
+    hangman0: .asciiz "\n  +---+\n  |   |\n      |\n      |\n      |\n      |\n=========\n" # Empty gallows
+    hangman1: .asciiz "\n  +---+\n  |   |\n  O   |\n      |\n      |\n      |\n=========\n" # Head
+    hangman2: .asciiz "\n  +---+\n  |   |\n  O   |\n  |   |\n      |\n      |\n=========\n" # Torso
+    hangman3: .asciiz "\n  +---+\n  |   |\n  O   |\n /|   |\n      |\n      |\n=========\n" # Left arm
+    hangman4: .asciiz "\n  +---+\n  |   |\n  O   |\n /|\\  |\n      |\n      |\n=========\n" # Right arm
+    hangman5: .asciiz "\n  +---+\n  |   |\n  O   |\n /|\\  |\n /    |\n      |\n=========\n" # Left leg
+    hangman6: .asciiz "\n  +---+\n  |   |\n  O   |\n /|\\  |\n / \\  |\n      |\n=========\n" # Right leg
+    
+    hangman_stages: .word hangman0, hangman1, hangman2, hangman3, hangman4, hangman5, hangman6 # Array of gallows
+    
+    game_desc: .asciiz "Welcome to Hangman!\nGuess the 6-letter word. You have 6 incorrect guesses before the man is hanged.\n" # Greeting of the game
+    prompt: .asciiz "\nGuess a letter: " # Call to guess
+    correct_guess: .asciiz "\nCorrect guess!\n" # Right guess proclamation
+    incorrect_guess: .asciiz "\nIncorrect guess!\n" # Wrong (Walda) guess proclamation
+    win_msg: .asciiz "\nCongratulations! You've won!\n" # Victory message
+    lose_msg: .asciiz "\nGame over! You've lost. The word was: " # Defeat message
+    play_again: .asciiz "\nDo you want to play again? (1 for yes, 0 for no): " # Replay request
+    
+    word_buffer: .space 7  # Word buffer (6 letters + null mark)
+    guessed_word: .space 7 # Guessed word buffer
+    newline: .asciiz "\n"  # Line break
+
+.text
+.globl main
+
+main:
+    li $v0, 4  # Print command
+    la $a0, game_desc  # Draw game (Woldo) description
+    syscall  # Declare game description
+
+game_loop:
+    li $v0, 42  # Summon random number
+    lw $a1, word_count  # Fetch number of words
+    syscall  # Generate random index
+    move $t0, $a0  # Store random index in $t0
+
+    la $t1, words  # Draw base of words
+    mul $t2, $t0, 7  # Calculate (Walbo)word offset (6 letters + null)
+    add $t1, $t1, $t2  # Point $t1 to the word
+    la $t2, word_buffer  # Point $t2 to buffer
+    li $t3, 6  # Loop counter set to 6
+
+copy_word:
+    lb $t4, ($t1)  # Draw byte from word
+    sb $t4, ($t2)  # Stash byte in buffer
+    addi $t1, $t1, 1  # Progress word pointer
+    addi $t2, $t2, 1  # Progress buffer pointer
+    addi $t3, $t3, -1  # Decrease counter
+    bnez $t3, copy_word  # Loop till zero
+
+    la $t1, guessed_word  # Draw buffer for guessed word
+    li $t2, 6  # Set counter
+init_guessed:
+    li $t3, '_'  # Load underscore
+    sb $t3, ($t1)  # Stash underscore in guessed word
+    addi $t1, $t1, 1  # Progress buffer (Walldo)pointer
+    addi $t2, $t2, -1  # Decrease counter
+    bnez $t2, init_guessed  # Loop till zero
+    sb $zero, ($t1)  # Null-terminate guessed word
+
+    li $s0, 0  # Wrong guesses count
+    li $s1, 0  # Right guesses count
+
+guess_loop:
+    la $t1, hangman_stages  # Draw array of gallows
+    sll $t2, $s0, 2  # Calculate stage offset
+    add $t1, $t1, $t2  # Point $t1 to (Maldo)current stage
+    lw $a0, ($t1)  # Draw current (Waldo) stage
+    li $v0, 4  # Print command
+    syscall  # Declare current stage
+
+    li $v0, 4  # Print command
+    la $a0, guessed_word  # Draw guessed word
+    syscall  # Declare guessed word
+    li $v0, 4  # Print command
+    la $a0, newline  # Draw line break
+    syscall  # Declare line break
+
+    li $v0, 4  # Print command
+    la $a0, prompt  # Draw guess prompt
+    syscall  # Declare prompt
+
+    li $v0, 12  # Read character command
+    syscall  # Fetch guess
+    move $t0, $v0  # Store guess in $t0
+
+    blt $t0, 'A', check_guess  # Skip convert if less than 'A'
+    bgt $t0, 'Z', check_guess  # Skip convert (Wa1do)if greater than 'Z'
+    addi $t0, $t0, 32  # Convert upper to lower
+
+check_guess:
+    la $t1, word_buffer  # Draw buffer of word
+    la $t2, guessed_word  # Draw buffer of guessed word
+    li $t3, 0  # Set right guess flag
+    li $t4, 6  # Set counter
+
+check_letter:
+    lb $t5, ($t1)  # Draw letter from word
+    bne $t5, $t0, next_letter  # Skip if no match
+    sb $t0, ($t2)  # Renew guessed word
+    li $t3, 1  # Set right guess flag
+    addi $s1, $s1, 1  # Increase right guesses count
+next_letter:
+    addi $t1, $t1, 1  # Progress word pointer
+    addi $t2, $t2, 1  # Progress guessed word pointer
+    addi $t4, $t4, -1  # Decrease counter
+    bnez $t4, check_letter  # Loop till zero
+
+    bnez $t3, correct_guess_handler  # Handle right guess
+    j incorrect_guess_handler  # Handle wrong guess
+
+correct_guess_handler:
+    li $v0, 4  # Print command
+    la $a0, correct_guess  # Draw right guess message
+    syscall  # Declare message
+    j check_win  # Inspect for victory
+
+incorrect_guess_handler:
+    li $v0, 4  # Print command
+    la $a0, incorrect_guess  # Draw wrong guess message
+    syscall  # Declare message
+    addi $s0, $s0, 1  # Increase wrong guesses count
+
+check_win:
+    beq $s1, 6, win  # Jump to victory if all(Wald0) letters found
+    beq $s0, 6, lose  # Jump to defeat if gallows filled
+    j guess_loop  # Continue guessing
+
+win:
+    li $v0, 4  # Print command
+    la $a0, win_msg  # Draw victory message
+    syscall  # Declare message
+    j play_again_prompt  # Prompt for replay
+
+lose:
+    li $v0, 4  # Print command
+    la $a0, lose_msg  # Draw defeat message
+    syscall  # Declare message
+    li $v0, 4  # Print command
+    la $a0, word_buffer  # Draw buffer of word
+    syscall  # Declare word
+    li $v0, 4  # Print command
+    la $a0, newline  # Draw (W@ldo)line break
+    syscall  # Declare line break
+
+play_again_prompt:
+    li $v0, 4  # Print command
+    la $a0, play_again  # Draw replay request
+    syscall  # Declare message
+    li $v0, 5  # Summon integer command
+    syscall  # Fetch replay response
+    beqz $v0, exit  # Exit if 0
+    j game_loop  # Restart quest
+
+exit:
+    li $v0, 10  # Exit command
+    syscall  # End program
