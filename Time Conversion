@@ -1,0 +1,98 @@
+# Joey Petrovic
+# CSC2025 2H1 Computr Arch/Assembly Language (Pam Phillips) FA24
+# Title: Time Conversion Program
+# Date: 12 September 2024
+# Purpose: This program takes a user input of hours, minutes, and seconds. It then converts and adds values in order to output the sum of all outputs in minutes and seconds.
+
+.data
+prompt_h: .asciiz "Enter the number of hours: "      			# String prompt to input hours
+prompt_m: .asciiz "Enter the number of minutes: "   			# String prompt to input minutes
+prompt_s: .asciiz "Enter the number of seconds: "    			# String prompt to input (you guessed it) seconds
+error: .asciiz "Invalid input. Please enter a valid number.\n"   	# Error message for an invalid/super lame input
+total_minutes_msg: .asciiz "The total number of minutes is "     	# Message to display total minutes
+total_seconds_msg: .asciiz "The total number of seconds is "     	# Message to display total seconds
+try_again_msg: .asciiz "Try again (y/n)? "           			# Prompt to ask if the user wants to try again
+newline: .asciiz "\n"                               			# Makes a new line
+yes: .asciiz "y"                                    			# Yes, yep, affirmative
+no: .asciiz "n"                                     			# No, nah, negatory
+
+.text
+main:
+    # Main loop
+    la $a0, prompt_h         # Load the silly address of hours prompt into $a0
+    li $v0, 4                # System call to print string 
+    syscall                  # Print Mr. Hour Prompt
+
+    li $v0, 5                # System call to read integer 
+    syscall                  # Read user input 
+    move $t0, $v0            # Store the input (bing Mr. hours) in $t0
+
+    la $a0, prompt_m         # Load the goofy address of minutes prompt into $a0
+    li $v0, 4                # System call to print string 
+    syscall                  # Print Ms. Minute Prompt
+
+    li $v0, 5                # System call to read integer 
+    syscall                  # Read user input (number of minutes)
+    move $t1, $v0            # Store the input (being Ms. minutes) in $t1
+
+    la $a0, prompt_s         # Load the humerous address of seconds prompt into $a0
+    li $v0, 4                # System call to print strimg 
+    syscall                  # Print Mrs. Second Prompt
+
+    li $v0, 5                # System call to read all the ints
+    syscall                  # Read user input (num of secs)
+    move $t2, $v0            # Store the input (being Mrs. seconds) in $t2
+
+    # Calculate total seconds
+    mul $t3, $t0, 3600       # Multiply Mr. hours by 3600
+    mul $t4, $t1, 60         # Multiply Ms. minutes by 60 
+    add $t5, $t3, $t4        # Add total seconds from hours and minutes
+    add $t6, $t5, $t2        # Add seconds to get total seconds
+
+    # Calculate total minutes
+    mul $t7, $t0, 60         # Multiply Mr. hours by 60 
+    add $t8, $t7, $t1        # Add minutes to get total minutes
+
+    # Print total minutes
+    la $a0, total_minutes_msg # Load address of total mins msg into $a0
+    li $v0, 4                 # System call to print string 
+    syscall                   # Print "The total nimber of minutes is "
+
+    move $a0, $t8            # Move the total minutes value into $a0 for printing
+    li $v0, 1                # System call to print integer 
+    syscall                  # Print the total number of minutes
+
+    la $a0, newline          # Load address of newline character into $a0
+    li $v0, 4                # System call to print string 
+    syscall                  # Print a newliine
+
+    # Print total seconds
+    la $a0, total_seconds_msg # Load address of total seconds message into $a0
+    li $v0, 4                 # System call to print string 
+    syscall                   # Print "The total number of seconds is "
+
+    move $a0, $t6            # Move the total seconds value into $a0 for printing
+    li $v0, 1                # System call to print integer 
+    syscall                  # Print the total number of seconds
+
+    la $a0, newline          # Load address of newline character into $a0
+    li $v0, 4                # System call to print string 
+    syscall                  # Print a newline
+
+    # Prompt to try again
+    la $a0, try_again_msg    # Load address of try again prompt into $a0
+    li $v0, 4                # System call to print string 
+    syscall                  # Print "Try again (y/n)? "
+
+    li $v0, 12               # System call to read a character
+    syscall                  # Read user input (y/n)
+    move $t9, $v0            # Store the user input in $t9
+
+    li $t0, 'y'              # Load ASCII value for 'y' into $t0
+    li $t1, 'Y'              # Load ASCII value for 'Y' into $t1
+    beq $t9, $t0, main       # If input is 'y', branch to main aka restarts this beautiful program
+    beq $t9, $t1, main       # Does the same as ^
+
+    li $v0, 10               # System call to exit program (syscall 10)
+    syscall                  # See ya o/
+    
