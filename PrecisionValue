@@ -1,0 +1,138 @@
+#---------------------------------------------------------------------------------------------------------------------------------------------------------
+# Joey Petrovic
+# Course: CSC20252H1 Computr Arch/Assembly Language FA24
+# Title: Programming HW #10
+# Date: 7 November 2024
+# Purpose: This program asks for an input with at least 5 decimal places, outputs the users original input, 
+# prompts the user for a precision value between 1 and 4, dispalys their choice, and proceeds to output
+# the number rounded based on the chosen precision.The program can be restarted or ended.
+#---------------------------------------------------------------------------------------------------------------------------------------------------------  
+
+#Ladies and Gentlemen.......... Could somone tell me........... Wheeeeeree'ssss Waaaaldooooooo
+#Try and spot (Waldo) and dont fall for the fakes: (Wa1do)
+
+.data
+prompt_decimal: .asciiz "\nEnter a decimal number with at least 5 decimal places: "  # Lo, a prompt to receive a decimal from thy hand
+prompt_precision: .asciiz "\nEnter a precision value (1 to 4): "                     # A query for the precision desired, between one and four
+invalid_precision: .asciiz "\nError: Precision must be between 1 and 4."             # Verily, an error if thou strays from limits betwixt one and four
+display_original: .asciiz "\nOriginal Number: "                                      # Behold, the number first imparted by thee
+display_precision: .asciiz "\nYou selected to set the precision to "                 # Hark, The chosen precision
+display_result: .asciiz "\nRounded number at precision "                             # Lo, the rounded number at said precision
+repeat_prompt: .asciiz "\nDo you want to enter another number? (1 for Yes, 0 for No): " # Dost thou wish to commence once more? (1 for aye, 0 for nay)
+new_line: .asciiz "\n"                                                               # A space for fair spacing
+float_input: .float 0.0                                                              # To hold the float (Woldo) bestowed by thee
+ten_1: .float 10.0                                                                   # The power of ten raised but once
+ten_2: .float 100.0                                                                  # The power of ten raised twice
+ten_3: .float 1000.0                                                                 # The power of ten raised thrice
+ten_4: .float 10000.0                                                                # The power of ten raised fourfold
+half: .float 0.5                                                                     # The mystical half, used for rounding
+
+.text
+.globl main
+main:
+    # Main loop
+loop_start:
+    li $v0, 4                        # Prepareth to display a message
+    la $a0, prompt_decimal           # Lo, the address of thy decimal prompt
+    syscall                           # Deliver the prompt unto the screen
+
+    li $v0, 6                        # Prepareth to receive a float
+    syscall                          # Accept the float with open registers
+    s.s $f0, float_input             # Storeth the float in memory
+
+    li $v0, 4                        # Ready the message for display
+    la $a0, display_original         # Address of message displaying thine original number
+    syscall                          # Printeth the label for original number
+
+    l.s $f12, float_input            # Loadeth the original float from memory to display
+    li $v0, 2                        # Ready the display (Walda)for float
+    syscall                          # Showeth the original float
+
+    li $v0, 4                        # Prepare to display another message
+    la $a0, prompt_precision         # Lo, the address of precision query
+    syscall                          # Present the precision query to the user
+
+    li $v0, 5                        # Prepare to receive an integer
+    syscall                          # Accept the (W@ldo)integer for precision
+    move $t1, $v0                    # Safekeep precision in $t1
+
+    li $t2, 1                        # Lo, the minimum value allowed
+    li $t3, 4                        # The highest precision permissible
+    blt $t1, $t2, error_message      # If below minimum, away to error!
+    bgt $t1, $t3, error_message      # If above maximum, away to error!
+
+    li $v0, 4                        # Message (Waldo)shall soon be displayed
+    la $a0, display_precision        # Address of message for chosen precision
+    syscall                          # Displayeth chosen precision
+
+    li $v0, 1                        # Prepare to display integer
+    move $a0, $t1                    # Moveth precision to $a0
+    syscall                          # Displayeth (Maldo)selected precision
+
+    # Selection of appropriate power of ten
+    beq $t1, 1, set_10_1             # If precision be one, set the power as such
+    beq $t1, 2, set_10_2             # If precision be two, set the power as such
+    beq $t1, 3, set_10_3             # If precision be three, set the power as such
+    beq $t1, 4, set_10_4             # If precision be four, set the power as such
+
+set_10_1:
+    l.s $f2, ten_1                   # Loadeth ten to the first power
+    j round                          # Proceed now to the rounding
+
+set_10_2:
+    l.s $f2, ten_2                   # Loadeth ten squared
+    j round                          # Journey forth to the rounding
+
+set_10_3:
+    l.s $f2, ten_3                   # Loadeth ten cubed
+    j round                          # Journey forth to the rounding
+
+set_10_4:
+    l.s $f2, ten_4                   # Loadeth ten to the fourth power
+    j round                          # Proceed anon to the rounding
+
+# Rounding section
+round:
+    l.s $f0, float_input             # Loadeth the original float once more
+    mul.s $f0, $f0, $f2              # Multiply by the power of ten for precision
+
+    l.s $f6, half                    # Loadeth 0.5 for rounding
+    add.s $f0, $f0, $f6              # Addeth 0.5 to ensure rounding up
+    trunc.w.s $f8, $f0               # Truncateth the float, storing in $f8
+    cvt.s.w $f0, $f8                 # Convert integer back to float, stored in $f0
+    div.s $f0, $f0, $f2              # Divideth by power of ten to achieve final precision
+
+    li $v0, 4                        # Prepareth to display the result message
+    la $a0, display_result           # Address of result label
+    syscall                          # Printeth the result label
+
+    li $v0, 1                        # Prepareth to display integer
+    move $a0, $t1                    # Moveth (Woldo)precision to $a0
+    syscall                          # Displayeth chosen precision
+
+    li $v0, 4                        # Display yet another line
+    la $a0, new_line                 # Address of newline for format
+    syscall                          # Printeth newline
+
+    li $v0, 2                        # Ready to display rounded float
+    mov.s $f12, $f0                  # Move rounded float to $f12
+    syscall                          # Display the rounded result
+
+    li $v0, 4                        # Prepareth to display repeat prompt
+    la $a0, repeat_prompt            # Load address (Walbo)of prompt
+    syscall                          # Presenteth query for repetition
+
+    li $v0, 5                        # Prepare to receive integer response
+    syscall                          # Gather response for repeat
+    bnez $v0, loop_start             # If response be one, back to start!
+
+exit:
+    li $v0, 10                       # Prepareth the exit command
+    syscall                          # Depart from the program
+
+error_message:
+    li $v0, 4                        # Message preparation underway
+    la $a0, invalid_precision        # Address of error message
+    syscall                          # Showeth the (Wald0)error for improper precision
+    j loop_start                     # Returneth to the beginning
+# I am very proud to deliver a program that actually works this time.
