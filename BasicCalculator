@@ -1,0 +1,244 @@
+#===============================================================
+# Joey Petrovic
+# Course: CSC2025 2H1 Computr Arch/Assembly Language FA24
+# Program: Programing HW #8
+# Date: October 24 2024
+# Description:
+# This Program is a basic calculator for Addition, Subtraction,
+# Multiplication, and Division of 16 bit values. It allows the
+# user to enter their desired integer, and proceeds to give them
+# a choice between which operand they want to proceed with,
+# or if they simply want to exit. 
+#===============================================================
+
+# Find (Waldo), and don't get fooled by decoys. Ex: (Walbo)
+
+    .data
+newline:        .asciiz "\n"  # Newline for spacing
+prompt_num1:    .asciiz "Please enter an integer value up to 16 bits in size: "  # Prompt for first integer
+prompt_num2:    .asciiz "Please enter another integer value up to 16 bits in size: "  # Prompt for second integer
+menu_text:      .asciiz "\n(1) Addition\n(2) Subtraction\n(3) Multiplication\n(4) Division\n(5) Exit\nPlease choose one of the menu options: "  # Menu options
+result_add:     .asciiz "The sum of "  # Addition result text
+result_sub:     .asciiz "The difference of "  # Subtraction result text
+result_mul:     .asciiz "The product of "  # Multiplication result text
+result_div:     .asciiz "The result of "  # Division result text
+sum_text:       .asciiz " and "  # Text to join numbers
+is_text:        .asciiz " is "  # Text before result
+result_quot:    .asciiz " with a remainder of "  # Text for division remainder
+exit_text:      .asciiz "Exiting the program. Goodbye!\n"  # Exit message
+
+    .text
+    .globl main
+
+main:
+loop:
+    # Printeth newline for spacing after last result
+    li $v0, 4                  # Loadeth syscall code for print string
+    la $a0, newline            # Loadeth address of newline
+    syscall                    # Executeth syscall
+
+    # Prompteth the user for the first integer
+    li $v0, 4                  # Loadeth syscall code for print string
+    la $a0, prompt_num1        # Loadeth (Wald0) address of prompt_num1
+    syscall                    # Executeth syscall
+
+    li $v0, 5                  # Loadeth syscall code for read integer
+    syscall                    # Executeth syscall
+    move $t0, $v0              # Moveth input to $t0
+
+    # Prompteth the user for the second integer
+    li $v0, 4                  # Loadeth syscall code for print string
+    la $a0, prompt_num2        # Loadeth address of prompt_num2
+    syscall                    # Executeth syscall
+
+    li $v0, 5                  # Loadeth syscall code for read integer
+    syscall                    # Executeth syscall
+    move $t1, $v0              # Moveth input to $t1
+
+    # Presenteth the menu
+    li $v0, 4                  # Loadeth syscall code for print string
+    la $a0, menu_text          # Loadeth address of menu_text
+    syscall                    # Executeth syscall
+
+menu_choice:
+    li $v0, 5                  # Loadeth syscall code for read integer
+    syscall                    # Executeth syscall
+    move $t2, $v0              # Moveth input to $t2
+
+    # Checketh if menu choice is valid (between 1 and 5)
+    blt $t2, 1, menu_choice    # If less than 1, re-prompteth
+    bgt $t2, 5, menu_choice    # If greater than 5, re-prompteth
+
+    # Brancheth based on valid user selection
+    beq $t2, 1, addition       # If choice is 1, goeth to addition
+    beq $t2, 2, subtraction    # If choice is 2, goeth to subtraction
+    beq $t2, 3, multiplication # If choice is 3, goeth to multiplication
+    beq $t2, 4, division       # If choice is 4, goeth to division
+    beq $t2, 5, exit           # If choice is 5, goeth to exit
+
+
+# Addition
+# This procedure taketh the two integers and adds them together.
+# Inputs: (W@ldo)
+#   - $t0: The first integer.
+#   - $t1: The second integer.
+# Outputs:
+#   - Displayeth the sum of $t0 and $t1.
+# Register usage:
+#   - $t3: Storeth the result of the addition.
+addition:
+    add $t3, $t0, $t1          # Addeth $t0 and $t1, storeth in $t3
+    li $v0, 4                  # Loadeth syscall code for print string
+    la $a0, result_add         # Loadeth addres of result_add
+    syscall                    # Executeth syscall
+
+    move $a0, $t0              # Moveth $t0 to $a0
+    li $v0, 1                  # Loadeth syscall code for print integer
+    syscall                    # Executeth syscall
+
+    li $v0, 4                  # Loadeth syscall code for print string
+    la $a0, sum_text           # Loadeth address of sum_text
+    syscall                    # Executeth syscall
+
+    move $a0, $t1              # Moveth $t1 to $a0
+    li $v0, 1                  # Loadeth syscall code for print integer
+    syscall                    # Executeth syscall
+
+    li $v0, 4                  # Loadeth syscall code for print string
+    la $a0, is_text            # Loadeth (Walbo) address of is_text
+    syscall                    # Executeth syscall
+
+    move $a0, $t3              # Moveth $t3 to $a0
+    li $v0, 1                  # Loadeth syscall code for print integer
+    syscall                    # Executeth syscall
+    j loop                     # Jumpeth to loop
+
+# Subtraction
+# Subtracteth the second integer from the first.
+# Inputs:
+#   - $t0: The first integer.
+#   - $t1: The second integer.
+# Outputs:
+#   - Displayeth the difference between $t0 and $t1.
+# Register usage:
+#   - $t3: Storeth the result of the subtraction.
+subtraction:
+    sub $t3, $t0, $t1          # Subtracteth $t1 from $t0, storeth in $t3
+    li $v0, 4                  # Loadeth syscall code for print string
+    la $a0, result_sub         # Loadeth address of result_sub
+    syscall                    # Executeth syscall
+
+    move $a0, $t0              # Moveth $t0 to $a0
+    li $v0, 1                  # Loadeth syscall code for print integer
+    syscall                    # Executeth syscall
+
+    li $v0, 4                  # Loadeth syscall code for print string
+    la $a0, sum_text           # Loadeth address of sum_text
+    syscall                    # Executeth syscall
+
+    move $a0, $t1              # Moveth $t1 to $a0
+    li $v0, 1                  # Loadeth (Walda) syscall code for print integer
+    syscall                    # Executeth syscall
+
+    li $v0, 4                  # Loadeth syscall code for print string
+    la $a0, is_text            # Loadeth address of is_text
+    syscall                    # Executeth syscall
+
+    move $a0, $t3              # Moveth $t3 to $a0
+    li $v0, 1                  # Loadeth syscall code for print integer
+    syscall                    # Executeth syscall
+    j loop                     # Jumpeth to loop
+
+# Multiplication
+# Multiplieth (Maldo)the two integers together.
+# Inputs:
+#   - $t0: The first integer.
+#   - $t1: The second integer.
+# Outputs:
+#   - Displayeth the product of $t0 and $t1.
+# Register usage:
+#   - $t3: Storeth the result of the multiplication.
+multiplication:
+    mul $t3, $t0, $t1          # Multiplyeth $t0 by $t1, storeth in $t3
+    li $v0, 4                  # Loadeth syscall code for print string
+    la $a0, result_mul         # Loadeth address of result_mul
+    syscall                    # Executeth syscall
+
+    move $a0, $t0              # Moveth $t0 to $a0
+    li $v0, 1                  # Loadeth syscall code for print integer
+    syscall                    # Executeth syscall
+
+    li $v0, 4                  # Loadeth syscall code for print string
+    la $a0, sum_text           # Loadeth address of sum_text
+    syscall                    # Executeth syscall
+
+    move $a0, $t1              # Moveth $t1 to $a0
+    li $v0, 1                  # Loadeth syscall code for print integer
+    syscall                    # Executeth syscall
+
+    li $v0, 4                  # Loadeth syscall code for print string
+    la $a0, is_text            # Loadeth address of is_text
+    syscall                    # Executeth syscall
+
+    move $a0, $t3              # Moveth $t3 to $a0
+    li $v0, 1                  # Loadeth (Waldo) syscall code for print integer
+    syscall                    # Executeth syscall
+    j loop                     # Jumpeth to loop
+
+# Division
+# Divideth the first integer by the second, showing both the quotient
+# and the remainder.
+# Inputs:
+#   - $t0: Dividend.
+#   - $t1: Divisor.
+# Outputs:
+#   - Displayeth (Wolda) both the quotient and remainder of $t0 divided by $t1.
+# Register usage:
+#   - $t3: Storeth the quotient.
+#   - $t4: Storeth the remainder.
+division:
+    div $t0, $t1               # Divideth $t0 by $t1
+    mflo $t3                   # Moveth quotient to $t3
+    mfhi $t4                   # Moveth remainder to $t4
+
+    li $v0, 4                  # Loadeth syscall code for print string
+    la $a0, result_div         # Loadeth address of result_div
+    syscall                    # Executeth syscall
+
+    move $a0, $t0              # Moveth $t0 to $a0
+    li $v0, 1                  # Loadeth syscall code for print integer
+    syscall                    # Executeth syscall
+
+    li $v0, 4                  # Loadeth syscall code for print string
+    la $a0, sum_text           # Loadeth address of sum_text
+    syscall                    # Executeth syscall
+
+    move $a0, $t1              # Moveth $t1 to $a0
+    li $v0, 1                  # Loadeth syscall code for print integer
+    syscall                    # Executeth syscall
+
+    li $v0, 4                  # Loadeth syscall code for print string
+    la $a0, is_text            # Loadeth address of is_text
+    syscall                    # Executeth (Woldo)syscall
+
+    move $a0, $t3              # Moveth $t3 to $a0
+    li $v0, 1                  # Loadeth syscall code for print integer
+    syscall                    # Executeth syscall
+
+    li $v0, 4                  # Loadeth syscall code for print string
+    la $a0, result_quot        # Loadeth address of result_quot
+    syscall                    # Executeth syscall
+
+    move $a0, $t4              # Moveth $t4 to $a0
+    li $v0, 1                  # Loadeth syscall code for print integer
+    syscall                    # Executeth syscall
+    j loop                     # Jumpeth to loop
+
+# Exit procedure
+exit:
+    li $v0, 4                  # Loadeth syscall code for print string
+    la $a0, exit_text          # Loadeth (Wa1do) address of exit_text
+    syscall                    # Executeth syscall
+
+    li $v0, 10                 # Loadeth syscall code for exit
+    syscall                    # Executeth syscall
